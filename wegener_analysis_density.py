@@ -15,54 +15,106 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy.interpolate import interp1d
 
-#%% Firn density
-df_sumup = pd.read_pickle('data/sumup_greenland_bav.pkl')
-df_sumup=df_sumup.reset_index()
-
+# data from Wegner expedition
+# Wegener density #1
 df_wegener = pd.read_excel('data/Wegener 1930/density_raw_Wegener.xlsx')
 df_wegener['latitude'] = np.nan
 df_wegener['longitude'] = np.nan
 
+# adding latitude and longitude
 tmp = pd.read_csv('data/Wegener 1930/snowdens_wegener_10-20-50_latlon.csv')
 for i,dist in enumerate(tmp.distance_i):
     df_wegener.loc[df_wegener['distance to margin']==dist, 'latitude'] = tmp.loc[i,'lat']
     df_wegener.loc[df_wegener['distance to margin']==dist, 'longitude'] = tmp.loc[i,'lon']
     df_wegener['depth_mid'] = df_wegener['depth from'] + (df_wegener['depth to']-df_wegener['depth from'])/2
-df_bav=pd.read_csv('data/csv dataset/CoreList_no_sumup.csv',sep=";",encoding='ANSI')
-df_bav = df_bav.loc[df_bav.DensityAvailable=='y']
-citation_bav = np.unique(df_bav.Citation)
+df_wegener.to_csv('data/Wegener 1930/density_raw_Wegener_with_lat_lon.csv')
+   
+# Sorge's density profile at Eismitte
+df_dens_eismitte = pd.read_csv('data/Wegener 1930/digitize_firn_var_sources.csv', 
+                               sep=';',
+                               skiprows=3,
+                               header=None).iloc[:,:2]
+df_dens_eismitte.columns = ['depth','density']
+df_dens_eismitte.depth = -df_dens_eismitte.depth
+df_dens_eismitte.density = 1000* df_dens_eismitte.density
 
-df_sumup[df_sumup==-9999.0]=np.nan
-df_sumup = df_sumup.rename(columns=dict(lat='latitude',
-                                        lon='longitude', 
-                                        elev='elevation',
-                                        top='depth_top',
-                                        bot='depth_bot'))
+# 200km Randabstand
 
-#%%  Plotting location
-df_sumup = df_sumup.loc[np.logical_and(df_sumup.longitude <-36.5,
-                           np.logical_and(df_sumup.latitude < 73,
-                                          df_sumup.latitude > 69)),:]
-df_bav = df_bav.loc[np.logical_and(df_bav.longitude <-36.5,
-                           np.logical_and(df_bav.latitude < 73,
-                                          df_bav.latitude > 69)),:]
+# other data
+# not loading SUMup: only no additional cores compared to bav dataset
+# df_sumup = pd.read_csv('../SUMup/SUMup 2023 beta/SUMup_greenland_density_2023.csv')
+# msk = (df_sumup.longitude >-40.3) & (df_sumup.longitude <-39.3) \
+#     & (df_sumup.latitude < 71.2) & (df_sumup.latitude > 70.8)\
+#         & (df_sumup.elevation > 1800) 
+# df_sumup = df_sumup.loc[msk, :]
 
-plt.figure()
-# for i, txt in enumerate(df_sumup.name):
-#     plt.annotate(#str(txt), #
-#                   txt, 
-#                   (df_sumup.longitude.iloc[i],
-#                   df_sumup.latitude.iloc[i]))
-plt.scatter(df_wegener.longitude,df_wegener.latitude,label='Wegener')
-plt.scatter(df_bav.longitude,df_bav.latitude,label='other sources')
-plt.scatter(df_sumup.longitude,df_sumup.latitude,label='sumup')
-plt.xlabel('Longitude (deg E)')
-plt.ylabel('Latitude (deg N)')
-lg = plt.legend(loc='upper left',bbox_to_anchor=(0, 1.2),ncol=3,title='Density measurements')
-lg.get_title().set_fontsize(15)
+# max_depth = df_sumup.groupby('profile')['stop_depth','midpoint'].max().mean(1)
+# df_sumup = df_sumup.set_index('profile').loc[max_depth.loc[max_depth>5].index, : ]
+# df_sumup.reference.unique()
+
+# BAV dataset
+df_bav_meta = pd.read_csv('../../Data/Cores/csv dataset/CoreList.csv', sep = ';')
+df_bav_meta = df_bav_meta.loc[df_bav_meta.DensityAvailable==1]
+df_bav_meta['longitude'] = df_bav_meta.Westing_decdeg
+df_bav_meta['latitude'] = df_bav_meta.Northing_decdeg
+df_bav_meta['elevation'] = df_bav_meta.Elevation_masl
+msk = (df_bav_meta.longitude >-40.3) & (df_bav_meta.longitude <-39.3) \
+    & (df_bav_meta.latitude < 71.2) & (df_bav_meta.latitude > 70.8)\
+        & (df_bav_meta.MaxDepthm > 5) 
+df_bav_meta = df_bav_meta.loc[msk, :]
+df_bav_meta = df_bav_meta.set_index('CoreNo')
+citation_bav = np.unique(df_bav_meta.Citation)
+
+# %% Comparison of nearby density profiles at Eismitte
+core_list = df_bav_meta.index.values
+
+plt.figure(figsize=(4,6))
+sym = 'o^dvs<>pP*ho^dvs<>pP*h'
+
+df_morris = pd.DataFrame()
+for i, core_id in enumerate(core_list[1:]):
+    tmp = pd.read_csv('../../Data/Cores/csv dataset/cores/'+str(core_id)+'.csv', 
+                           sep = ';',
+                           names=['depth','density','type','ice_perc'],
+                           na_values=-999)
+    tmp['depth'] = tmp.depth/100
+    tmp  = tmp[['depth','density']]
+    tmp['Name'] = df_bav_meta.loc[core_id,'Name']
+    df_morris =pd.concat((df_morris,
+                          tmp))
+df_morris_mean=df_morris.groupby('depth').density.mean()
+df_morris_std=df_morris.groupby('depth').density.std()
+plt.fill_betweenx(df_morris_mean.index, 
+                  df_morris_mean-df_morris_std, 
+                  df_morris_mean+df_morris_std,
+                  color='lightgray')
+plt.plot(df_morris_mean.values,
+         df_morris_mean.index, 
+         label='Morris and Wingham (2014)')
+
+core_id = 348
+tmp = pd.read_csv('../../Data/Cores/csv dataset/cores/'+str(core_id)+'.csv', 
+                       sep = ';',
+                       names=['depth','density','type','ice_perc'],
+                       na_values=-999)
+tmp['depth'] = tmp.depth/100
+plt.plot(tmp.density, tmp.depth,
+         #marker=sym[i], 
+         label= 'Benson (1962)')
+    
+plt.plot(df_dens_eismitte.density, df_dens_eismitte.depth,
+         linewidth=3, marker='o', label='Eismitte 1930')
+# Eismitte source comparison
+# The density profile from Eismitte was already in the firn density dataset
+# as part of the Spencer et al. 2001 data
+plt.legend()
+plt.ylim(11, 0)
+plt.xlabel('Density (kg m$^{-3}$)')
+plt.ylabel('Depth (m)')
+plt.savefig('plots/firn_density_eismitte.tif', dpi=300)
+
 
 # %% plotting Wegener's density profiles
-
 fig, ax = plt.subplots(6, int(len(df_wegener['distance to margin'].unique())/6+1), figsize=(18,9))
 plt.subplots_adjust(wspace=0, hspace=0, left=0.05, right = 0.95, top=0.95,bottom=0.05)
 for i in range(ax.shape[0]):
@@ -85,6 +137,7 @@ for i, dist in enumerate(df_wegener['distance to margin'].unique()):
                  color='tab:red')
     ax[i].set_ylim(2,0)
     ax[i].set_xlim(230,600)
+    
 #%% 
 elev_bins = np.arange(1300,3000,200)
 # plt.close('all')
