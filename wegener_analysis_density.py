@@ -68,7 +68,7 @@ citation_bav = np.unique(df_bav_meta.Citation)
 # %% Comparison of nearby density profiles at Eismitte
 core_list = df_bav_meta.index.values
 
-plt.figure(figsize=(4,6))
+plt.figure(figsize=(5,7))
 sym = 'o^dvs<>pP*ho^dvs<>pP*h'
 
 df_morris = pd.DataFrame()
@@ -90,7 +90,7 @@ plt.fill_betweenx(df_morris_mean.index,
                   color='lightgray')
 plt.plot(df_morris_mean.values,
          df_morris_mean.index, 
-         label='Morris and Wingham (2014)')
+         label='T35 2004-2010:\nMorris and Wingham (2014)')
 
 core_id = 348
 tmp = pd.read_csv('../../Data/Cores/csv dataset/cores/'+str(core_id)+'.csv', 
@@ -100,10 +100,11 @@ tmp = pd.read_csv('../../Data/Cores/csv dataset/cores/'+str(core_id)+'.csv',
 tmp['depth'] = tmp.depth/100
 plt.plot(tmp.density, tmp.depth,
          #marker=sym[i], 
-         label= 'Benson (1962)')
+         label= 'T35 1955: Benson (1962)')
     
 plt.plot(df_dens_eismitte.density, df_dens_eismitte.depth,
-         linewidth=3, marker='o', label='Eismitte 1930')
+         linewidth=3, marker='o', label='Eismitte 1930: Sorge (1930)')
+plt.grid()
 # Eismitte source comparison
 # The density profile from Eismitte was already in the firn density dataset
 # as part of the Spencer et al. 2001 data

@@ -102,7 +102,7 @@ ax[0].set_ylabel('Depth (m)', size=12)
 pos = ax[1].get_position()
 ax[1].set_position([pos.x0, pos.y0, 0.4, 0.5])
 sym = 'o^dvs<>pP*ho^dvs<>pP*h'
-cmap = cm.get_cmap('Spectral')
+cmap = cm.get_cmap('Spectral_r')
 for i, year in enumerate(range(1930,2020,10)):
     msk = (df_temp.year >= year) & (df_temp.year < year+10)
     tmp = df_temp.loc[msk, :]
@@ -114,20 +114,20 @@ for i, year in enumerate(range(1930,2020,10)):
         msk = (tmp.reference_short == ref)
         tmp1 = tmp.loc[msk, :]
         if i ==0:
-            ax[1].plot(tmp1.elevation, tmp1.temperatureObserved,
+            ax[1].plot( tmp1.temperatureObserved, tmp1.elevation,
                      marker=sym[k],color=cmap(i/8),markersize=12, linestyle ='None',label=ref)
         else:
-            ax[1].plot(tmp1.elevation, tmp1.temperatureObserved,
+            ax[1].plot(tmp1.temperatureObserved, tmp1.elevation, 
                      marker=sym[k],color=cmap(i/8), linestyle ='None',label=ref)
     
     d = np.polyfit(tmp.elevation, tmp.temperatureObserved, 1)
     print(np.round(d[0]*100,2),'for '+str(year)+'-'+str(year+9))
     f = np.poly1d(d)
-    ax[1].plot([1800, 3300],f([1800, 3300]),color=cmap(i/8), label='fit '+str(year)+'-'+str(year+9) )
+    ax[1].plot(f([1800, 3300]),[1800, 3300],color=cmap(i/8), label='fit '+str(year)+'-'+str(year+9) )
 ax[1].grid()
 ax[1].legend(ncol=2, loc='lower center', bbox_to_anchor=(0.5,1.01), fontsize=9)
-ax[1].set_ylabel('10 m firn temperature ($^o$C)', size=12)
-ax[1].set_xlabel('Elevation (m a.s.l.)', size=12)
+ax[1].set_xlabel('10 m firn temperature ($^o$C)', size=12)
+ax[1].set_ylabel('Elevation (m a.s.l.)', size=12)
 ax[1].yaxis.set_label_position("right")
 ax[1].yaxis.tick_right()
 plt.annotate('A', (0.03,0.94), xytext=None, xycoords='figure fraction',
