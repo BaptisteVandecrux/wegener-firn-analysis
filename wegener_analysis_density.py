@@ -38,6 +38,19 @@ df_dens_eismitte.columns = ['depth','density']
 df_dens_eismitte.depth = -df_dens_eismitte.depth
 df_dens_eismitte.density = 1000* df_dens_eismitte.density
 
+df_eismitte = pd.read_excel('data/Wegener 1930/schnee-firndichte_wegener.xlsx').iloc[1:, :]
+df_eismitte.columns =['Nr.', 'date', 'depth_from', 'depth_to',  'note', 'density', 'note_bav']
+df_eismitte[['depth_from', 'depth_to']] = df_eismitte[['depth_from', 'depth_to']]/100
+df_eismitte.density = 1000* df_eismitte.density
+
+for i in df_eismitte.index:
+    if df_eismitte.loc[i, 'depth_from'] <0:
+        print('On', df_eismitte.loc[i, 'date'],'the surface had increased by', - df_eismitte.loc[i, 'depth_from'])
+        df_eismitte.loc[i:, ['depth_from','depth_to']] = df_eismitte.loc[i:, ['depth_from','depth_to']] - df_eismitte.loc[i, 'depth_from']
+
+plt.figure()
+df_eismitte.depth_from.plot()
+df_eismitte.depth_to.plot()
 # 200km Randabstand
 
 # other data
@@ -67,8 +80,9 @@ citation_bav = np.unique(df_bav_meta.Citation)
 
 # %% Comparison of nearby density profiles at Eismitte
 core_list = df_bav_meta.index.values
-
-plt.figure(figsize=(5,7))
+plt.close('all')
+plt.figure(figsize=(5,9))
+plt.subplots_adjust(top=0.7)
 sym = 'o^dvs<>pP*ho^dvs<>pP*h'
 
 df_morris = pd.DataFrame()
@@ -87,10 +101,12 @@ df_morris_std=df_morris.groupby('depth').density.std()
 plt.fill_betweenx(df_morris_mean.index, 
                   df_morris_mean-df_morris_std, 
                   df_morris_mean+df_morris_std,
-                  color='lightgray')
+                  color='mistyrose')
 plt.plot(df_morris_mean.values,
          df_morris_mean.index, 
-         label='T35 2004-2010:\nMorris and Wingham (2014)')
+         color='lightsalmon',
+         linewidth=1,
+         label='T35 2004-2010\n(Morris and Wingham, 2014)')
 
 core_id = 348
 tmp = pd.read_csv('../../Data/Cores/csv dataset/cores/'+str(core_id)+'.csv', 
@@ -99,17 +115,34 @@ tmp = pd.read_csv('../../Data/Cores/csv dataset/cores/'+str(core_id)+'.csv',
                        na_values=-999)
 tmp['depth'] = tmp.depth/100
 plt.plot(tmp.density, tmp.depth,
-         #marker=sym[i], 
-         label= 'T35 1955: Benson (1962)')
+         color='lightblue',
+         linewidth=1,
+         label= 'T35 1955 (Benson, 1962)')
     
-plt.plot(df_dens_eismitte.density, df_dens_eismitte.depth,
-         linewidth=3, marker='o', label='Eismitte 1930: Sorge (1930)')
+plt.plot(df_dens_eismitte.density, df_dens_eismitte.depth*np.nan,
+         linewidth=4, color='w', label='Eismitte 1930-31 (Sorge, 1935)')
+
+for i, month in enumerate([9, 10, 11, 12, 1, 2, 3, 4]):
+    tmp = df_eismitte.set_index('date')
+    tmp = tmp.loc[tmp.index.month==month, :]
+    if tmp.shape[0] == 0:
+        continue
+    for row in tmp[['depth_from','depth_to','density']].iterrows():
+        row = row[1]
+        plt.plot([row['density'], row['density']], 
+                 row[['depth_from','depth_to']], 
+                 color=cm.Dark2(i/7),
+                 linewidth=2, label='_noledgend_')
+    plt.plot([row['density'], row['density']], 
+        np.nan*row[['depth_from','depth_to']], 
+        color=cm.Dark2(i/7),
+        linewidth=2, label=tmp.index[0].strftime("%b"))
 plt.grid()
 # Eismitte source comparison
 # The density profile from Eismitte was already in the firn density dataset
 # as part of the Spencer et al. 2001 data
-plt.legend()
-plt.ylim(11, 0)
+plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.5))
+plt.ylim(16, 0)
 plt.xlabel('Density (kg m$^{-3}$)')
 plt.ylabel('Depth (m)')
 plt.savefig('plots/firn_density_eismitte.tif', dpi=300)
