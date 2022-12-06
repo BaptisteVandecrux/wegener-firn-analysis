@@ -152,7 +152,7 @@ for i, year in enumerate(range(1930,2020,10)):
 T10m_list.to_csv('T10m_sites_coords.csv', index=None)
        
 ax[2].grid()
-ax[2].legend(ncol=2, loc='lower center', bbox_to_anchor=(0.5,1.01), fontsize=9)
+ax[2].legend(ncol=1, loc='lower left', bbox_to_anchor=(1.01 , -0.2), fontsize=9)
 ax[2].set_xlabel('10 m firn temperature ($^o$C)', size=12)
 ax[2].set_ylabel('Elevation (m a.s.l.)', size=12)
 
@@ -258,22 +258,24 @@ ax[1].grid()
 # Eismitte source comparison
 # The density profile from Eismitte was already in the firn density dataset
 # as part of the Spencer et al. 2001 data
-ax[1].legend(loc='upper center', bbox_to_anchor=(0.5, 1.2))
+ax[1].legend(loc='lower left', fontsize=9)
 ax[1].set_ylim(16, 0)
 ax[1].set_xlabel('Density (kg m$^{-3}$)',size=12)
 ax[1].set_ylabel('Depth (m)',size=12)
 l, b, w, h = ax[0].get_position().bounds
-ax[0].set_position([l, b-0.03, w*1.1, h+0.05])
-l, b, w, h = ax[1].get_position().bounds
-ax[1].set_position([l+0.13, b-0.49, w*0.8, h+0.32])
+ax[0].set_position([l-0.05,        b-0.15, w, h+0.15])
+l1, _, _, _ = ax[1].get_position().bounds
+ax[1].set_position([l1,  b-0.15, w*1.2,     h+0.15])
 l, b, w, h = ax[2].get_position().bounds
-ax[2].set_position([l, b, w, h*0.45])
+ax[2].set_position([l, b, w*1.65, h*0.45])
 
-plt.annotate('A', (0.055,0.94), xytext=None, xycoords='figure fraction',
+ax[0].set_ylim(16, 0)
+ax[1].set_ylim(16, 0)
+plt.annotate('A', (0.025,0.94), xytext=None, xycoords='figure fraction',
                size=14, weight='bold')
-plt.annotate('B', (0.055,0.4), xytext=None, xycoords='figure fraction',
+plt.annotate('B', (0.08,0.3), xytext=None, xycoords='figure fraction',
                size=14, weight='bold')
-plt.annotate('C', (0.58,0.75), xytext=None, xycoords='figure fraction',
+plt.annotate('C', (0.475,0.94), xytext=None, xycoords='figure fraction',
                size=14, weight='bold')
 plt.savefig('plots/firn_density_temperature.tif', dpi=300)
 
