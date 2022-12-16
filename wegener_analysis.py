@@ -82,13 +82,14 @@ df_200.plot(ax=ax[0], y='depth', x='Firntemp',
 ax[0].plot(-23.9, 10, color='tab:blue',
            marker='d', label='_nolegend_')
 
-ax[0].plot(np.nan,np.nan, color='w', linestyle='None', label='Eismitte:')
+ax[0].plot(np.nan,np.nan, color='w', linestyle='None', label='Eismitte 1930:')
 cmap = cm.get_cmap('autumn')
 tmp = df_temp.loc[df_temp.site=='Eismitte', :]
 plot_lines = []
+m = ['January','February','March','April','May','June','July']
 for i, date in enumerate(df_eism.columns[:7]):
     df_eism[date].reset_index().plot(ax=ax[0], x=date, y='index', 
-                                     color=cmap(i/7), label=date)
+                                     color=cmap(i/7), label=m[i])
     if len(tmp.loc[tmp.date == date,'temperatureObserved'].values) == 1:
         ax[0].plot(tmp.loc[tmp.date == date,'temperatureObserved'].values,
                10, color=cmap(i/7), marker='d', label='_nolegend_')
@@ -237,6 +238,7 @@ tmp = pd.read_csv('../../Data/Cores/csv dataset/cores/'+str(core_id)+'.csv',
 tmp['depth'] = tmp.depth/100
 ax[1].plot(tmp.density, tmp.depth,
          color='tab:blue',
+         alpha=0.7,
          linewidth=1.5,
          label= 'T35 1955 (Benson, 1962)')
 
@@ -271,11 +273,11 @@ ax[2].set_position([l, b, w*1.65, h*0.45])
 
 ax[0].set_ylim(16, 0)
 ax[1].set_ylim(16, 0)
-plt.annotate('A', (0.025,0.94), xytext=None, xycoords='figure fraction',
+plt.annotate('a', (0.025,0.94), xytext=None, xycoords='figure fraction',
                size=14, weight='bold')
-plt.annotate('B', (0.08,0.3), xytext=None, xycoords='figure fraction',
+plt.annotate('c', (0.08,0.3), xytext=None, xycoords='figure fraction',
                size=14, weight='bold')
-plt.annotate('C', (0.475,0.94), xytext=None, xycoords='figure fraction',
+plt.annotate('b', (0.475,0.94), xytext=None, xycoords='figure fraction',
                size=14, weight='bold')
 plt.savefig('plots/firn_density_temperature.tif', dpi=300)
 
